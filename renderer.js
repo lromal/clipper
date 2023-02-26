@@ -11,7 +11,7 @@ class Clipper extends React.Component {
       history: [],
       interval: -1,
       showStorageExceedToast: false,
-      enableAudio: true,
+      enableAudio: false,
       shouldCapture: true,
       selectedHistory: 1
     }
@@ -142,26 +142,25 @@ class Clipper extends React.Component {
         return
       }
 
-      // Check if this text is already in the clipboard history
-      const isAlreadyInHistory = this.state.history
-        .findIndex(({ text: historyText }) => historyText === text) !== -1
+      const oldHistoryItem = this.state.history
+        .find((historyItem) => historyItem.text === text)
 
-      // Check the condition
-      if (this.state.history.length === 0 || !isAlreadyInHistory) {
-        // Add this text to history
-        this.setState({
-          history: [{
-            id: this.getNewItemId(),
-            text
-          },
-          ...this.state.history]
-        }, () => {
-          // Sync with storage
-          this.updateLocalstorage()
-        })
-
-        this.playSuccessAudio()
+      if (oldHistoryItem) {
+        this.deleteSingleText(oldHistoryItem.id)
       }
+
+      this.setState({
+        history: [{
+          id: this.getNewItemId(),
+          text
+        },
+        ...this.state.history]
+      }, () => {
+        // Sync with storage
+        this.updateLocalstorage()
+      })
+
+      this.playSuccessAudio()
     }, 500)
   }
 
@@ -212,9 +211,7 @@ class Clipper extends React.Component {
     window.copyToClipboard(e.currentTarget.dataset.text)
   }
 
-  handleDeleteSingleText = (e, id) => {
-    // Stop event propagation to the main li tag
-    e.stopPropagation()
+  deleteSingleText = (id) => {
 
     const remainingHistory = this.state.history.filter(item => item.id !== id)
 
@@ -306,9 +303,6 @@ class Clipper extends React.Component {
                       >
                         <div>{text}</div>
                       </li>
-                      <div className="collection-item__options">
-                        <a onClick={(e) => this.handleDeleteSingleText(e, id)} className="secondary-content red-text text-darken-3"><i class="material-icons">delete</i></a>
-                      </div>
                     </div>
                   )
                 })
