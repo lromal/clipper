@@ -1,7 +1,7 @@
 const successAudio = new Audio('./assets/sound/success.mp3')
 const errorAudio = new Audio('./assets/sound/error.mp3')
 const trashAudio = new Audio('./assets/sound/trash.mp3')
-const storageLimit = 10
+const storageLimit = 500
 const maxCharsThatCanBeCopied = 500
 
 class Clipper extends React.Component {
@@ -12,7 +12,29 @@ class Clipper extends React.Component {
       interval: -1,
       showStorageExceedToast: false,
       enableAudio: true,
-      shouldCapture: true
+      shouldCapture: true,
+      selectedHistory: 1
+    }
+
+    window.addEventListener('keyup', this.handleKeyPress, true)
+  }
+
+  handleKeyPress = (event) => {
+    console.log(`You pressed ${event.key}`) // ArrowDown ArrowUp
+    // console.dir(event)
+    let selectedHistory = this.state.selectedHistory;
+    const historyLength = this.state.history.length
+
+    if (selectedHistory === undefined) {
+      selectedHistory = historyLength;
+    }
+
+    if (event.key === 'ArrowDown' && (selectedHistory - 1) > 0) {
+      this.setState({ selectedHistory: selectedHistory - 1 })
+    }
+
+    if (event.key === 'ArrowUp' && (selectedHistory + 1) <= historyLength) {
+      this.setState({ selectedHistory: selectedHistory + 1 })
     }
   }
 
@@ -147,6 +169,10 @@ class Clipper extends React.Component {
     // Get All previously added histories
     this.state.history = this.loadHistory()
 
+    if (this.state.history && this.state.history.length > 0) {
+      this.state.selectedHistory = this.state.history[0].id
+    }
+
     // Start the watcher
     if(this.state.shouldCapture) {
       this.startClipboardWatch()
@@ -158,6 +184,14 @@ class Clipper extends React.Component {
     clearInterval(this.state.interval)
   }
 
+  getSelectedClass(id, selectedId, historyLength) {
+    // DEBT: something wrong with this condition
+    if (id === selectedId || (selectedId === undefined && id === historyLength)) {
+      return "collection-item hoverable m-tb collection-item__selected"
+    } else {
+      return "collection-item hoverable m-tb"
+    }
+  }
   handleTextClick = (e) => {
     // Clear the last copied text to avoid conflicts
     window.localStorage.removeItem('clipper:last-copied')
@@ -261,9 +295,17 @@ class Clipper extends React.Component {
             ? <ul className="collection no-border clickable">
               {
                 this.state.history.map(({ id, text }) => {
+                  const clName = this.getSelectedClass(id, this.state.selectedHistory, this.state.history.length);
                   return (
                     <div className="collection-item__div">
-                      <li key={id} data-text={text} className="collection-item hoverable m-tb" onClick={this.handleTextClick}><div>{text}</div></li>
+                      <li
+                        key={id}
+                        data-text={text}
+                        className={clName}
+                        onClick={this.handleTextClick}
+                      >
+                        <div>{text}</div>
+                      </li>
                       <div className="collection-item__options">
                         <a onClick={(e) => this.handleDeleteSingleText(e, id)} className="secondary-content red-text text-darken-3"><i class="material-icons">delete</i></a>
                       </div>

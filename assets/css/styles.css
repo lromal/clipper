@@ -54,6 +54,10 @@ body {
     display: block;
 }
 
+.collection-item__selected {
+    background-color: aqua !important;
+}
+
 /* Load Material Fonts */
 @font-face {
     font-family: 'Material Icons';

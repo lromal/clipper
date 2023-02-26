@@ -4,7 +4,8 @@ const {
   BrowserWindow, 
   Tray, 
   screen,
-  ipcMain
+  ipcMain,
+  globalShortcut
 } = require('electron')
 const path = require('path')
 const os = require('os')
@@ -56,9 +57,11 @@ function createWindow() {
     icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      devTools: false
+      devTools: true
     }
   })
+
+  mainWindow.webContents.openDevTools()
 
   tray = new Tray(path.join(__dirname, 'assets', 'icon.png'))
 
@@ -72,7 +75,14 @@ function createWindow() {
   tray.on('click', () => {
     mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()
   })
+
 }
+
+app.whenReady().then(() => {
+  globalShortcut.register('Alt+CommandOrControl+F', () => {
+    mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()
+  })
+})
 
 const gotTheLock = app.requestSingleInstanceLock()
 
